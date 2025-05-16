@@ -1,0 +1,21 @@
+---
+
+- name: Create file /var/log/samba/audit.log
+  ansible.builtin.file:
+    path: /var/log/samba/audit.log
+    state: touch
+
+- name: Apply /etc/rsyslog.d/auditsamba.conf
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - {src: 'auditsamba.conf.j2', dest: '/etc/rsyslog.d/auditsamba.conf'}
+
+- name: Restart Services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+  with_items:
+    - rsyslog
+    - samba

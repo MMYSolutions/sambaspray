@@ -1,0 +1,30 @@
+- name: Creates Sysvol directory
+  ansible.builtin.file:
+    path: /Sysvol
+    state: directory
+
+- name: Unmount Sysvol
+  ansible.builtin.mount:
+    path: /Sysvol
+    state: unmounted
+  ignore_errors: true
+
+- name: Mount and bind Sysvol
+  ansible.builtin.mount:
+    name: /Sysvol
+    src: localhost:/sysvol
+    opts: "defaults,acl,_netdev"
+    state: mounted
+    fstype: glusterfs
+
+- name: Creates Sysvol directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/srv.mount.d
+    state: directory
+
+- name: Create Gluster SystemD
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - {src: 'glusterfsmounts.service.j2', dest: '/etc/systemd/system/srv.mount.d/glusterfsmounts.service'}

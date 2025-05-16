@@ -1,0 +1,20 @@
+- name: Apply NTP Template
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - {src: 'chrony.conf.j2', dest: '/etc/chrony.conf'}
+
+- name: Create dir /var/lib/samba/ntp_signd/
+  ansible.builtin.file:
+    path: /var/lib/samba/ntp_signd
+    state: directory
+    mode: '0750'
+    owner: root
+    group: chrony
+
+- name: Enable and start NTP
+  ansible.builtin.systemd:
+    name: chronyd
+    state: restarted
+    enabled: yes

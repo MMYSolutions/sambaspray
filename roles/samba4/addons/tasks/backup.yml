@@ -1,0 +1,21 @@
+- name: Create Backup Folder
+  ansible.builtin.file:
+    path: "{{ FILESERVER.SHARE_PATH }}/Backup"
+    state: directory
+
+- name: Create Backup Script
+  ansible.builtin.template:
+    src: samba_backup.sh.j2
+    dest: "/usr/sbin/samba_backup"
+    mode: u=rwx,g=rwx,o=rx
+
+- name: Create Cronjob of Domain Backup
+  ansible.builtin.cron:
+    name: "Samba Domain Backup"
+    state: present
+    minute: "{{ SAMBA_DOMAIN_BACKUP_CRON_SCHEDULE.MINUTES }}"
+    hour: "{{ SAMBA_DOMAIN_BACKUP_CRON_SCHEDULE.HOUR }}"
+    day: "{{ SAMBA_DOMAIN_BACKUP_CRON_SCHEDULE.DAY_MONTH }}"
+    month: "{{ SAMBA_DOMAIN_BACKUP_CRON_SCHEDULE.MONTH }}"
+    weekday: "{{ SAMBA_DOMAIN_BACKUP_CRON_SCHEDULE.DAY_WEEK }}"
+    job: 'bash -l /usr/sbin/samba_backup'

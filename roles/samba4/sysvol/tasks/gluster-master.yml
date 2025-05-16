@@ -1,0 +1,29 @@
+- name: Enable and start service Gluster
+  ansible.builtin.systemd:
+    name: glusterd.service
+    enabled: yes
+    state: started
+
+- name: Form a cluster.
+  ansible.builtin.command: "gluster peer probe {{ peernode }}"
+  loop: "{{ ansible_play_hosts | flatten(levels=1) }}"
+  loop_control:
+    loop_var: peernode
+    pause: 5
+  register: glusterpeerprobe
+  become: true
+  run_once: true
+  any_errors_fatal: true
+  changed_when: "'peer probe: success.' in glusterpeerprobe.stdout_lines"
+
+- name: Configure Gluster volume.
+  ansible.builtin.gluster_volume:
+    state: present
+    name: sysvol
+    brick: /Glusterfs
+    # replicas: "{{ groups['gluster'] | length }}"
+    cluster: "{{ groups.gluster | join(',') }}"
+    host: "{{ inventory_hostname }}"
+    force: yes
+  run_once: true
+  ignore_errors: true

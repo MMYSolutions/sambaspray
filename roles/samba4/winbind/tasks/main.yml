@@ -1,0 +1,21 @@
+- name: Enable winbind in nsswitch.conf (1/2)
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^passwd(.*)$'
+    line: 'passwd:     sss files winbind systemd'
+    backrefs: yes
+
+- name: Enable winbind in nsswitch.conf (2/2)
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    regexp: '^group(.*)$'
+    line: 'group:      sss files winbind systemd'
+    backrefs: yes
+
+- name: Winbind Create a symbolic link
+  ansible.builtin.shell: |
+    ln -s /usr/lib/libnss_winbind.so.2 /lib64/
+    ln -s /lib64/libnss_winbind.so.2 /lib64/libnss_winbind.so
+    ldconfig
+    ldconfig
+    ldconfig

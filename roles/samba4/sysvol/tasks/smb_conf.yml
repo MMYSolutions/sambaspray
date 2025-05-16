@@ -1,0 +1,29 @@
+---
+
+- name: Change sysvol directory in smb.conf
+  ansible.builtin.replace:
+    path: /etc/samba/smb.conf
+    regexp: '/var/lib/samba/sysvol'
+    replace: '/Sysvol'
+
+- name: Restart samba
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - samba
+
+- name: samba-tool ntacl sysvolreset
+  ansible.builtin.shell: samba-tool ntacl sysvolreset
+  when: inventory_hostname in groups.pdc
+
+- name: Remove old sysvol
+  ansible.builtin.file:
+    path: /var/lib/samba/sysvol
+    state: absent
+
+- name: Create a symbolic link for Sysvol
+  ansible.builtin.file:
+    src: /Sysvol
+    dest: /var/lib/samba/sysvol
+    state: link

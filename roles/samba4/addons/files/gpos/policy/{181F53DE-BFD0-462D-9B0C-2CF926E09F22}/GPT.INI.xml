@@ -1,0 +1,12 @@
+<IniFile>
+	<Section name="General">
+		<Parameter>
+			<Key>Version</Key>
+			<Value>3</Value>
+		</Parameter>
+		<Parameter>
+			<Key>displayName</Key>
+			<Value>Novo objeto de pol&#237;tica de grupo</Value>
+		</Parameter>
+	</Section>
+</IniFile>

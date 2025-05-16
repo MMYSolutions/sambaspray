@@ -1,0 +1,18 @@
+---
+
+- name: Check if already exists an domain
+  ansible.builtin.stat:
+    path: /var/lib/samba/private/idmap.ldb
+  register: check_idmap
+
+- name: Samba | Join
+  ansible.builtin.include_tasks: join.yml
+  when: inventory_hostname not in groups['pdc']
+
+- name: Samba | Post Join
+  ansible.builtin.include_tasks: post_join.yml
+  when: inventory_hostname not in groups['fileserver']
+
+- name: Samba | Configure
+  ansible.builtin.include_tasks: config.yml
+  when: inventory_hostname not in groups['fileserver']

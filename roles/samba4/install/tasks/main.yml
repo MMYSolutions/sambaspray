@@ -1,0 +1,38 @@
+---
+
+- name: Check if Samba Already installed using shell
+  ansible.builtin.shell: |
+    if [ -d /var/lib/samba ]; then
+      echo "exists"
+    else
+      echo "not exists"
+    fi
+  register: check_samba_shell
+
+- debug:
+    msg: "{{ check_samba_shell.stdout }}"
+
+- name: Check if domain already provisioned using shell
+  ansible.builtin.shell: |
+    if [ -f /var/lib/samba/private/idmap.ldb ]; then
+      echo "exists"
+    else
+      echo "not exists"
+    fi
+  register: idmap_file_shell
+
+- name: Samba | Install
+  ansible.builtin.include_tasks: install.yml
+  when: check_samba_shell.stdout == "not exists"
+
+- name: Delete old smb.conf
+  ansible.builtin.file:
+    state: absent
+    path: /etc/samba/smb.conf
+  when: idmap_file_shell.stdout == "not exists"
+
+- name: Delete old krb5.conf
+  ansible.builtin.file:
+    state: absent
+    path: /etc/krb5.conf
+  when: idmap_file_shell.stdout == "not exists"

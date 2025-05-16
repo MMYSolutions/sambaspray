@@ -1,0 +1,44 @@
+---
+- name: Samba | Addons | DNS
+  ansible.builtin.include_tasks: dns.yml
+
+- name: Samba | Addons | Passwords
+  ansible.builtin.include_tasks: passwords.yml
+  when: inventory_hostname in groups.pdc
+
+- name: Samba | Addons | Backup
+  ansible.builtin.include_tasks: backup.yml
+
+- name: Create default TNS Users
+  ansible.builtin.shell: |
+    samba-tool user list | grep tns.suporte
+    status=$?
+    if [ $status -eq 1 ]
+    then
+      samba-tool user add tns.suporte admin147852* --given-name=TNS --surname=Suporte --description="Conta TNS para gerenciamento de contas e adicao de maquinas ao dominio e ADM local"
+      samba-tool user setexpiry --noexpiry tns.suporte
+    fi
+    samba-tool user list | grep suporte | grep -v tns
+    status=$?
+    if [ $status -eq 1 ]
+    then
+      samba-tool user add suporte Sup##147852** --given-name=Suporte --surname=Parceiro --description="Conta Parceiro para gerenciamento de contas e adicao de maquinas ao dominio e ADM local"
+      samba-tool user setexpiry --noexpiry suporte
+    fi
+    samba-tool group listmembers "Account Operators" | grep tns.suporte
+    status=$?
+    if [ $status -eq 1 ]
+    then
+      samba-tool group addmembers "Account Operators" tns.suporte
+    fi
+    samba-tool group listmembers "Account Operators" | grep suporte | grep -v tns
+    status=$?
+    if [ $status -eq 1 ]
+    then
+      samba-tool group addmembers "Account Operators" suporte
+    fi
+  when: inventory_hostname in groups.pdc
+
+- name: Samba | Addons | GPOs
+  ansible.builtin.include_tasks: gpo.yml
+  when: inventory_hostname in groups.pdc  

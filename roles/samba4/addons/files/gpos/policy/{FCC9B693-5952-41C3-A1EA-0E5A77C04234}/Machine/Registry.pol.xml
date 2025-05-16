@@ -1,0 +1,12 @@
+<PolFile num_entries="2" signature="PReg" version="1">
+	<Entry type="1" type_name="REG_SZ">
+		<Key>Software\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths</Key>
+		<ValueName>\\*\SYSVOL</ValueName>
+		<Value>RequireMutualAuthentication=0, RequireIntegrity=0, RequirePrivacy=0</Value>
+	</Entry>
+	<Entry type="1" type_name="REG_SZ">
+		<Key>Software\Policies\Microsoft\Windows\NetworkProvider\HardenedPaths</Key>
+		<ValueName>\\*\NETLOGON</ValueName>
+		<Value>RequireMutualAuthentication=0, RequireIntegrity=0, RequirePrivacy=0</Value>
+	</Entry>
+</PolFile>

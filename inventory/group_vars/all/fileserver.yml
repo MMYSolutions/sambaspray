@@ -1,0 +1,8 @@
+# FileServer Configurations
+FILESERVER:
+  # Enable FileServer on DC, default is false
+  ENABLE_FS_ON_DC: false
+  SHARE_PATH: /Servidor
+  ENABLE_RECYCLE_SHARE: true
+  ENABLE_PUBLIC_SHARE: false
+  ENABLE_HOME_SHARE: false

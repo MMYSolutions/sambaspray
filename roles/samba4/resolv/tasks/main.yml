@@ -1,0 +1,21 @@
+---
+
+- name: Check if domain already provisioned
+  ansible.builtin.stat:
+    path: /var/lib/samba/private/idmap.ldb
+  register: idmap_file
+  
+- name: Disable resolv NetworkManager
+  ansible.builtin.template:
+    src: 90-dns-none.conf.j2
+    dest: /etc/NetworkManager/conf.d/90-dns-none.conf
+
+- name: Reload NetworkManager
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: reloaded
+
+- name: Configure resolv.conf
+  ansible.builtin.template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf

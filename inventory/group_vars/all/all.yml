@@ -1,0 +1,8 @@
+# Samba version to install // Semantic version
+SAMBA_VERSION: 4.22.1
+
+# Change the hostnames based in hosts.ini file // True or False
+CHANGE_HOSTNAME: true
+
+# Input your timezone // https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+TIMEZONE: "America/Sao_Paulo"

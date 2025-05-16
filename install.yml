@@ -1,0 +1,85 @@
+---
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - { role: bootstrap, tags: [ 'bootstrap', 'install' ] }
+
+- hosts: all
+  gather_facts: yes
+  tasks:
+
+    - name: Change Hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}.{{ SAMBA_DC_REALM }}"
+      when: ansible_fqdn != ansible_host and CHANGE_HOSTNAME
+      tags: hostname, install
+
+    - name: Set timezone
+      ansible.builtin.timezone:
+        name: "{{ TIMEZONE }}"
+      tags: timezone, install
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - { role: samba4/install, tags: [ 'install' ] }
+    - { role: samba4/hosts, tags: [ 'hosts' ] }
+    - { role: samba4/winbind, tags: [ 'winbind' ] }
+    - { role: samba4/resolv, tags: [ 'resolv' ] }
+
+- hosts: pdc
+  gather_facts: yes
+  roles:
+    - { role: samba4/domain/provision, tags: [ 'provision' ] }
+    - { role: samba4/ntp, tags: [ 'ntp', 'ntp-pdc' ] }
+    - { role: samba4/systemd, tags: [ 'systemd', 'systemd-pdc' ] }
+    - { role: samba4/restart, tags: [ 'restart', 'restart-pdc' ] }
+
+- hosts: pdc
+  gather_facts: yes
+  tasks:
+
+    - name: Force DNS Update
+      ansible.builtin.shell: samba_dnsupdate --all-names --verbose
+
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - { role: samba4/domain/join, tags: [ 'join' ] }
+    - { role: samba4/resolv, tags: [ 'resolv' ] }
+
+
+- hosts: dc
+  gather_facts: yes
+  roles:
+    - { role: samba4/ntp, tags: [ 'ntp', 'ntp-dc' ] }
+    - { role: samba4/systemd, tags: [ 'systemd', 'systemd-dc' ] }
+    - { role: samba4/restart, tags: [ 'restart', 'restart-dc' ] }
+
+- hosts: pdc:dc
+  gather_facts: yes
+  roles:
+    - { role: samba4/sysvol, tags: [ 'sysvol' ] }
+
+- hosts: fileserver
+  gather_facts: yes
+  roles:
+    - { role: samba4/ntp, tags: [ 'ntp', 'fileserver-ntp' ] }
+    - { role: samba4/systemd, tags: [ 'systemd', 'fileserver-systemd' ] }
+    - { role: samba4/restart, tags: [ 'restart', 'restart-fileserver' ] }
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - { role: samba4/smbconf, tags: [ 'smbconf' ] }
+    - { role: samba4/restart, tags: [ 'restart' ] }
+    - { role: samba4/fileserver, tags: [ 'fileserver' ] }
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - { role: samba4/audit, tags: [ 'audit' ] }
+    - { role: samba4/addons, tags: [ 'addons' ] }
+    - { role: samba4/restart, tags: [ 'restart' ] }

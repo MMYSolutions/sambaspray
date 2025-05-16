@@ -1,0 +1,16 @@
+
+
+- name: Create Backup of Idmap
+  ansible.builtin.command: tdbbackup -s .bak /var/lib/samba/private/idmap.ldb
+  when: inventory_hostname in groups['pdc']
+
+- name: Copy idpmap to DCs (1/2)
+  run_once: true
+  ansible.builtin.fetch: src=/var/lib/samba/private/idmap.ldb.bak dest=buffer/ flat=yes
+  when: inventory_hostname in groups['pdc']
+
+- name: Copy idpmap to DCs (2/2)
+  ansible.builtin.copy: 
+    src: buffer/idmap.ldb.bak
+    dest: /var/lib/samba/private/idmap.ldb
+  when: inventory_hostname in groups['dc']

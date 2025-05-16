@@ -1,0 +1,57 @@
+- name: Apply GlusterD volume configuration
+  ansible.builtin.template:
+    src: glusterd.vol.j2
+    dest: /etc/glusterfs/glusterd.vol
+
+- name: Enable and start service Gluster
+  ansible.builtin.systemd:
+    name: glusterd.service
+    enabled: yes
+    state: restarted
+
+- name: Samba | Sysvol Replication
+  ansible.builtin.include_tasks: gluster-master.yml
+  when: inventory_hostname in groups.pdc
+
+- name: Samba | Sysvol Replication
+  ansible.builtin.include_tasks: gluster-all.yml
+
+- name: Samba | Sysvol Replication
+  ansible.builtin.include_tasks: copy_files.yml
+  when: inventory_hostname in groups.pdc
+
+- name: Samba | Sysvol smb.conf
+  ansible.builtin.include_tasks: smb_conf.yml
+
+- name: Create check_sysvol.sh script
+  copy:
+    dest: /opt/check_sysvol.sh
+    content: |
+      #!/bin/bash
+
+      # Ponto de montagem a verificar
+      MOUNT_POINT="/Sysvol"
+
+      # Verifica se o ponto de montagem já está montado
+      if mountpoint -q "$MOUNT_POINT"; then
+          echo "$MOUNT_POINT já está montado."
+      else
+          echo "$MOUNT_POINT não está montado. Tentando montar..."
+          
+          # Monta o ponto de montagem usando as informações do /etc/fstab
+          if mount "$MOUNT_POINT"; then
+              echo "$MOUNT_POINT foi montado com sucesso."
+              # Reinicia o serviço samba após montar o ponto de montagem
+              systemctl restart samba
+              echo "Serviço samba reiniciado."
+          else
+              echo "Falha ao montar $MOUNT_POINT. Verifique o /etc/fstab e tente novamente."
+          fi
+      fi
+    mode: '0755'
+
+- name: Ensure cron job for check_sysvol.sh is present
+  cron:
+    name: "check_sysvol script"
+    minute: "*"
+    job: "/opt/check_sysvol.sh"

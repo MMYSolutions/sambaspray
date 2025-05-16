@@ -1,0 +1,3 @@
+- name: Synchronize Sysvol to new location using rsync
+  ansible.builtin.shell: |
+    rsync -a --xattrs --perms --acls /var/lib/samba/sysvol/ /Sysvol/

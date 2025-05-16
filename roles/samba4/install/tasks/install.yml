@@ -1,0 +1,59 @@
+---
+
+- name: Download Samba4
+  ansible.builtin.get_url:
+    url: "https://download.samba.org/pub/samba/stable/samba-{{ SAMBA_VERSION}}.tar.gz"
+    dest: /opt/
+
+- name: Extract package in /opt/
+  ansible.builtin.unarchive:
+    src: "/opt/samba-{{ SAMBA_VERSION }}.tar.gz"
+    dest: /opt/
+    remote_src: true
+
+- name:  Compiling Samba | ./configure
+  ansible.builtin.shell: ./configure --prefix /usr --enable-fhs --sysconfdir=/etc --localstatedir=/var --with-privatedir=/var/lib/samba/private --with-piddir=/var/run/samba --datadir=/usr/share --with-lockdir=/var/run/samba --with-statedir=/var/lib/samba --with-cachedir=/var/cache/samba
+  args:
+    chdir: /opt/samba-{{ SAMBA_VERSION }}/
+  async: 180 # Maximum allowed time in Seconds
+  poll: 0 # Polling Interval in Seconds
+  register: scrout
+
+- name: Waiting Configure to Finish
+  async_status:
+    jid: "{{ scrout.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 500
+
+- name: Compiling Samba | make
+  ansible.builtin.shell: make -j4
+  args:
+    chdir: /opt/samba-{{ SAMBA_VERSION }}/  
+  async: 1000
+  poll: 0
+  register: make
+
+- name: Compiling Samba | make (Please wait, this will take a while...)
+  async_status:
+    jid: "{{ make.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 1000
+  delay: 10
+
+- name: Compiling Samba | make install
+  ansible.builtin.shell: make install
+  args:
+    chdir: /opt/samba-{{ SAMBA_VERSION }}/  
+  async: 1000
+  poll: 0
+  register: make_install
+
+- name: Compiling Samba | make install (Please wait, this will take a while...)
+  async_status:
+    jid: "{{ make_install.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 1000
+  delay: 10

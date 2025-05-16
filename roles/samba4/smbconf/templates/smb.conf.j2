@@ -1,0 +1,109 @@
+################# Global Configuration ##################
+# Do not modify!!! unless you know what you're doing
+
+[global]
+bind interfaces only = Yes
+interfaces = lo {{ ansible_default_ipv4.interface }}
+{% if not inventory_hostname in groups['fileserver'] -%}
+netbios name = {{ inventory_hostname | upper }}
+{% endif -%}
+realm = {{ SAMBA_DC_REALM | upper }}
+server role = {% if not inventory_hostname in groups['fileserver'] %}active directory domain controller{% else %}member server{% endif +%}
+workgroup = {{ SAMBA_DC_DOMAIN }}
+{% if not inventory_hostname in groups['fileserver'] -%}
+server services = s3fs, rpc, nbt, wrepl, ldap, cldap, kdc, drepl, winbindd, ntp_signd, kcc, dnsupdate, dns
+dns forwarder = {% for item in DNS_FORWARDER %}{{ item }} {% endfor %}
+{% endif %}
+{% if inventory_hostname in groups['pdc'] or inventory_hostname in groups['dc'] %}
+
+idmap_ldb:use rfc2307 = yes
+{% endif %}
+vfs objects = {% if FILESERVER.ENABLE_RECYCLE_SHARE %}recycle,{% endif %}{% if AUDIT.ENABLE %} full_audit,{% endif %} acl_xattr{% if not inventory_hostname in groups['fileserver'] %}, dfs_samba4{% endif +%}
+ldap server require strong auth = no
+{% if inventory_hostname in groups['fileserver'] -%}
+winbind use default domain = yes
+idmap config * : backend = autorid
+idmap config * : range = 10000-9999999
+{% endif %}
+
+{% if not inventory_hostname in groups['pdc'] and not inventory_hostname in groups['dc'] or FILESERVER.ENABLE_FS_ON_DC %}
+{% if FILESERVER.ENABLE_RECYCLE_SHARE %}
+################# Recycle #######################
+
+# Se habilitado mantém a estrutura de diretórios ao mover os arquivos para a Lixeira
+recycle:keeptree = yes
+# Se habilitado preserva arquivos deletados com o mesmo nome criando uma copia do mesmo no repositório da Lixeira
+recycle:versions = yes
+# Diretório da Lixeira seguido da váriavel "%U" que identifica o nome de usuário, ou seja o arquivo que foi deletado pelo usuário João será salvo na pasta do mesmo e com isso facilitando a visualização de quem deletou o arquivo
+recycle:repository = .recycle/%U
+# Extensões de arquivos e pastas que não serão tratadas pela Lixeira
+recycle:exclude = *.tmp, *.log, *.obj, ~*.*, *.bak
+recycle:exclude_dir = tmp, cache, profiles
+{% endif %}
+{% endif %}
+
+{% if AUDIT.ENABLE %}
+################# Audit #######################
+
+{% if AUDIT.DOMAIN_AUTH.ENABLED or AUDIT.DOMAIN_PASSWORD.ENABLED or AUDIT.DOMAIN_GROUP.ENABLED -%}
+{% if not inventory_hostname in groups['fileserver'] -%}
+log level = 1{% if AUDIT.DOMAIN_AUTH.ENABLED %} auth_json_audit:3@/var/log/samba/auditoria/{{ AUDIT.DOMAIN_AUTH.LOG_FILE }} {% endif %}{% if AUDIT.DOMAIN_PASSWORD.ENABLED %} dsdb_password_json_audit:5@/var/log/samba/auditoria/{{ AUDIT.DOMAIN_PASSWORD.LOG_FILE }}{% endif %}{% if AUDIT.DOMAIN_GROUP.ENABLED %} dsdb_group_json_audit:5@/var/log/samba/auditoria/{{ AUDIT.DOMAIN_GROUP.LOG_FILE}}{% endif %}
+
+{% endif %}
+{% endif %}
+full_audit:prefix = IP=%I | USER=%u | MACHINE=%m | VOLUME=%S
+full_audit:success = {{ AUDIT.OPTIONS }}
+full_audit:failure = none
+full_audit:facility = LOCAL1
+full_audit:priority = DEBUG
+{% endif %}
+
+{% if not inventory_hostname in groups['fileserver'] %}
+################# Default Shares ##################
+# Do not modify!!! unless you know what you're doing
+
+[sysvol]
+path = /Sysvol
+read only = No
+
+[netlogon]
+path = /Sysvol/{{ SAMBA_DC_REALM }}/scripts
+read only = No
+{% endif %}
+
+{% if not inventory_hostname in groups['pdc'] and not inventory_hostname in groups['dc'] or FILESERVER.ENABLE_FS_ON_DC %}
+
+################# Custom Shares ###################
+
+### Example share and advanced options ###
+# [Name_of_your_share]
+# path = /Directory/Example
+# read only = no
+# browseable = yes
+# hide dot files = yes # Hide files start with a dot (.)
+# hide files = /$*/ # Hide selected files. example files start with ($)
+# hide special files = yes # Hide pipes, sockets, devices ...
+# hide unreadable = yes # Hide files with no read permissions
+# hide unwriteable files = yes # Hide files with no write permissions
+# veto files = /*.exe/*.bat/*.cmd # Define which extensions will be blocked (will not be saved)
+# include = /etc/samba/file.conf # With you want to include some configuration externaly
+
+{% if FILESERVER.ENABLE_PUBLIC_SHARE %}
+[Public]
+path = {{ FILESERVER.SHARE_PATH }}/Public
+read only = no
+{% endif %}
+
+{% if FILESERVER.ENABLE_HOME_SHARE %}
+[Users]
+path = {{ FILESERVER.SHARE_PATH }}/Users
+read only = no
+{% if SHADOW_COPY_ENABLE %}
+shadow:snapdir = {{ FILESERVER.SHARE_PATH }}/.snapshots/
+shadow:basedir = {{ FILESERVER.SHARE_PATH }}/Users
+shadow:sort = desc
+shadow:format = Users-snap-%d.%m.%Y.%H.%M.%S
+shadow:localtime = yes
+{% endif %}
+{% endif %}
+{% endif %}

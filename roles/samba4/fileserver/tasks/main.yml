@@ -1,0 +1,5 @@
+---
+
+- name: Samba | FileServer
+  ansible.builtin.include_tasks: fileserver.yml
+  when: inventory_hostname in groups.fileserver or FILESERVER.ENABLE_FS_ON_DC

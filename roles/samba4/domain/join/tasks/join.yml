@@ -1,0 +1,23 @@
+---
+
+
+- name: Domain Join BIND9_DLZ DC
+  ansible.builtin.shell: |
+    samba-tool domain join {{ SAMBA_DC_REALM}} DC \
+    --dns-backend="SAMBA_INTERNAL" \
+    --username="Administrator" \
+    --password={{ SAMBA_DC_ADMIN_PASSWD }} \
+    --workgroup="{{ SAMBA_DC_DOMAIN}}" \
+    --option="interfaces=lo {{ ansible_default_ipv4.interface }}" \
+    --option="bind interfaces only=yes"
+  when: inventory_hostname not in groups['fileserver'] and not check_idmap.stat.exists
+
+- name: Domain Join FileServer
+  ansible.builtin.shell: |
+    samba-tool domain join {{ SAMBA_DC_REALM}} MEMBER \
+    --username="Administrator" \
+    --password={{ SAMBA_DC_ADMIN_PASSWD }} \
+    --workgroup={{ SAMBA_DC_DOMAIN}} \
+    --option="interfaces=lo {{ ansible_default_ipv4.interface }}" \
+    --option="bind interfaces only=yes"
+  when: inventory_hostname not in groups['dc']

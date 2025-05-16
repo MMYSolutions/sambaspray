@@ -1,0 +1,9 @@
+- name: Audit
+  ansible.builtin.include_tasks: audit.yml
+  when: AUDIT.ENABLE
+
+- name: Create Samba Audit Dir
+  ansible.builtin.file:
+    path: /var/log/samba/auditoria
+    state: directory
+    mode: '0755'

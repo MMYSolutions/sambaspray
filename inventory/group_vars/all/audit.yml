@@ -1,0 +1,14 @@
+# Enable or disable audit
+AUDIT:
+  ENABLE: true
+  # https://www.samba.org/samba/docs/current/man-html/vfs_full_audit.8.html
+  OPTIONS: "renameat unlinkat"
+  DOMAIN_AUTH: 
+    ENABLED: true
+    LOG_FILE: auth_audit.log
+  DOMAIN_PASSWORD: 
+    ENABLED: true
+    LOG_FILE: password_audit.log
+  DOMAIN_GROUP: 
+    ENABLED: true
+    LOG_FILE: group_audit.log

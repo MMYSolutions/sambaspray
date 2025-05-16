@@ -1,0 +1,27 @@
+---
+
+- name: Restart Samba
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    masked: no
+    state: restarted
+  with_items:
+    - nmbd
+    - winbind
+    - samba
+  when: inventory_hostname in groups['fileserver']
+
+- name: Restart Samba and Bind
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    masked: no
+    state: restarted
+  with_items:
+    - samba
+  when: inventory_hostname in groups['pdc'] or inventory_hostname in groups['dc']
+
+- name: Wait Samba be ready
+  ansible.builtin.wait_for:
+    port: 445

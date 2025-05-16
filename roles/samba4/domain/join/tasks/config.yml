@@ -1,0 +1,6 @@
+---
+
+- name: Configure krb5.conf
+  ansible.builtin.shell: |
+      rm -f /etc/krb5.conf
+      cp /var/lib/samba/private/krb5.conf /etc/krb5.conf

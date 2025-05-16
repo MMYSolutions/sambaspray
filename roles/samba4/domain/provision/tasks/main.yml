@@ -1,0 +1,13 @@
+---
+
+- name: Check if already exists an domain
+  ansible.builtin.stat:
+    path: /var/lib/samba/private/idmap.ldb
+  register: check_idmap
+
+- name: Samba | Provision
+  ansible.builtin.include_tasks: provision.yml
+  when: not idmap_file.stat.exists
+
+- name: Samba | Configure
+  ansible.builtin.include_tasks: config.yml

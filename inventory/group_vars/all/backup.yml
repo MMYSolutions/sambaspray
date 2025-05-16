@@ -1,0 +1,11 @@
+# Retetion in days of backup (Only Domain Backup)
+SAMBA_BACKUP_RETENTION: "7"
+
+# Example https://crontab.guru/#0_20_*_*_*
+SAMBA_DOMAIN_BACKUP_CRON_SCHEDULE:
+  HOUR: "19"
+  MINUTES: "30"
+  SECONDS: "0"
+  DAY_MONTH: "*"
+  MONTH: "*"
+  DAY_WEEK: "*"

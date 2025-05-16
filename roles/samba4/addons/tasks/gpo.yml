@@ -1,0 +1,53 @@
+- name: Copy GPOs to servers
+  ansible.posix.synchronize:
+    src: gpos
+    dest: /tmp/
+    group: false
+    owner: false
+
+- name: Restore GPOs
+  ansible.builtin.shell: |
+    samba-tool gpo restore {{ item.gpo_name }} /tmp/gpos/policy/\{{ item.gpo_hash }}/ -U Administrator --password={{ SAMBA_DC_ADMIN_PASSWD }} --tmpdir=/tmp/ --restore-metadata
+  with_items:
+    - {
+        gpo_name: "NTP_SYNC",
+        gpo_hash: '{181F53DE-BFD0-462D-9B0C-2CF926E09F22\}',
+      }
+    - {
+        gpo_name: "UNC_PATHS",
+        gpo_hash: '{FCC9B693-5952-41C3-A1EA-0E5A77C04234\}',
+      }
+  register: command_result
+  failed_when: "'NEVER' in command_result.stderr"
+
+- name: Link GPOs
+  ansible.builtin.shell: |
+    GET_HASH=$(samba-tool gpo listall | grep -B1 {{ item }} | grep GPO | awk '{print $3}')
+    samba-tool gpo setlink {{ DC_DN }} $GET_HASH -U Administrator --password {{ SAMBA_DC_ADMIN_PASSWD }}
+    sleep 5
+  with_items:
+    - NTP_SYNC
+    - UNC_PATHS
+  register: command_result
+  failed_when: "'NEVER' in command_result.stderr"
+
+- name: DB Check
+  ansible.builtin.shell: |
+    sleep 5
+    samba-tool ntacl sysvolreset
+    samba-tool dbcheck --fix --yes
+    samba-tool dbcheck --fix --yes --cross-ncs
+    samba-tool dbcheck --fix --yes --reindex
+
+- name: Restart Samba
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    masked: no
+    state: restarted
+  with_items:
+    - samba
+
+- name: Wait Samba be ready
+  ansible.builtin.wait_for:
+    port: 445

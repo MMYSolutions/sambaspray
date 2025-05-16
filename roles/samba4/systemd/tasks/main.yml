@@ -1,0 +1,39 @@
+---
+
+- name: Create Samba Systemd
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - {src: 'samba.service.j2', dest: '/etc/systemd/system/samba.service'}
+
+- name: Create nmdb and winbind Systemd
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - {src: 'nmbd.service.j2', dest: '/etc/systemd/system/nmbd.service'}
+    - {src: 'winbind.service.j2', dest: '/etc/systemd/system/winbind.service'}
+  when: inventory_hostname in groups['fileserver']
+
+- name: Reload Daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable systemd services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+  with_items:
+    - samba
+    - nmbd
+    - winbind
+  when: inventory_hostname in groups['fileserver']
+
+- name: Enable systemd services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+  with_items:
+    - samba
+  when: inventory_hostname in groups['pdc'] or inventory_hostname in groups['dc']

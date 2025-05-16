@@ -1,0 +1,11 @@
+Vagrant/.vagrant/*
+Vagrant/.vagrant
+Vagrant/windows/.vagrant/*
+Vagrant/windows/.vagrant
+buffer/idmap*
+Vagrant/extra_storage*
+buffer/idmap.ldb.bak
+Vagrant/centos8/extra_storage*
+Vagrant/centos8/.vagrant
+Vagrant/oracle8/extra_storage*
+Vagrant/oracle8/.vagrant
