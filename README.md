@@ -1,5 +1,10 @@
 # SambaSpray
 
+[![GitHub Stars](https://img.shields.io/github/stars/MMYSolutions/sambaspray?style=social)](https://github.com/MMYSolutions/sambaspray/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/MMYSolutions/sambaspray?style=social)](https://github.com/MMYSolutions/sambaspray/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/MMYSolutions/sambaspray)](https://github.com/MMYSolutions/sambaspray/issues)
+[![License: MIT](https://img.shields.io/github/license/MMYSolutions/sambaspray)](https://opensource.org/licenses/MIT)
+
 > Deploy a Production Ready Samba4 Active Directory Domain Controller
 
 [🇧🇷 Leia em Português](./README.pt-BR.md)
@@ -85,7 +90,7 @@ pip3 install ansible
 Clone the repository:
 
 ```bash
-git clone https://github.com/ybucci/samba4spray.git
+git clone https://github.com/MMYSolutions/sambaspray.git
 cd samba4spray
 ```
 
